@@ -41,7 +41,7 @@ def create_payment():
         return jsonify({'payment_url': payment.confirmation.confirmation_url, 'payment_id': payment.id})
     except Exception as e:
         send_notification(f"Ошибка создания платежа: {str(e)}")
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e)}), HTTPStatus.NOT_FOUND
 
 @app.route('/webhook', methods=['POST'])
 def payment_webhook():
@@ -66,7 +66,7 @@ def payment_webhook():
         return '', HTTPStatus.OK
     
     except Exception as e:
-        send_notification(f"Webhook error: {str(e)}")
+        send_notification(f"Ошибка webhook: {str(e)}")
         return '', HTTPStatus.BAD_REQUEST
 
 @app.route('/refund', methods=['POST'])
@@ -76,7 +76,7 @@ def refund_payment():
     payment_id = data.get('payment_id')
     
     if not payment_id:
-        return jsonify({'error': 'payment_id is required'}), HTTPStatus.BAD_REQUEST
+        return jsonify({'error': 'укажите payment_id'}), HTTPStatus.BAD_REQUEST
     
     try:
         conn = sqlite3.connect('payments.db')
@@ -86,10 +86,10 @@ def refund_payment():
         conn.close()
         
         if not payment:
-            return jsonify({'error': 'Payment not found'}), HTTPStatus.NOT_FOUND
+            return jsonify({'error': 'Платеж не найден'}), HTTPStatus.NOT_FOUND
         
         if payment[1] != 'succeeded':
-            return jsonify({'error': 'Only successful payments can be refunded'}), HTTPStatus.BAD_REQUEST
+            return jsonify({'error': 'Платеж не завершился'}), HTTPStatus.BAD_REQUEST
         
         refund_amount = payment[0] 
         
